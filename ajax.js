@@ -178,9 +178,10 @@ function hadUser(key) {
         var user = users[i];
         if (key.toLowerCase() === user.login.toLowerCase()) {
             var doc = document.querySelectorAll(".user .card-head .info .name>a");
+            console.log(doc);
             for(var j=0; j<doc.length; j++){
                 if(doc[j].innerHTML === user.name){
-                    //console.log("已在页面中了哦~");
+                    // console.log("已在页面中了哦~");
                     //更新已有数据并重新渲染到 DOM
                     update(i,true);
                 }
@@ -195,13 +196,13 @@ function hadUser(key) {
 //查找用户
 function searchUser(key){
     //判断是否本地储存有用户，有就本地读取，否则执行 Ajax 函数发送 Ajax 请求
-    hadUser(key) || ajax(["GET", url + key, true],result);
+    hadUser(key) >= 0 || ajax(["GET", url + key, true],result);
 }
 
 //更新已有的用户数据
 function update(i,isRender) {
     // render(i);
-    // return;
+    // return i;
     if(new Date().getTime() - users[i].getTime > 1000 * 60 ){
         var key = users[i].login;
         ajax(["GET", url + key, true], function(data){
