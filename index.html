@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="alternate icon" class="js-site-favicon" type="image/png" href="./favicon.png">
+    <title>查找 GitHub 用户- Ajax 学习</title>
+    <link rel="stylesheet" href="ajax.css">
+</head>
+
+<body>
+    <div class="head">
+        <h1>Github 查找用户</h1>
+        <form id="search" class="container">
+            <div class="search-box">
+                <input class="username" type="text" id="key" placeholder="请输入用户名，比如 DanielHe4rt" autofocus="autofocus">
+                <button id="submit"></button>
+            </div>
+            <p id="test">
+                <span>试一试：</span>
+                <span class="test" id="user1">biaoyansu</span>
+                <span class="test" id="user2">metafizzy</span>
+                <span class="test" id="user3">uuRRx0</span>
+            </p>
+        </form>
+    </div>
+    <div id="result" class="container"></div>
+    <script src="./ajax.js"></script>
+</body>
+
+</html>
