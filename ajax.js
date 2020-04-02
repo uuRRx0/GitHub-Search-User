@@ -1,5 +1,5 @@
 var url = "https://api.github.com/users/";
-var form = document.getElementById("search");
+
 var myLocalStorage = {
     get: function (key) {
         return JSON.parse(localStorage.getItem(key));
@@ -9,37 +9,29 @@ var myLocalStorage = {
     }
 }
 var users = myLocalStorage.get("users") || [];
-var a = {};
-//form 表单监听并发送 Ajax 请求
-form.onsubmit = function (e) {
-    //取消默认跳转事件
-    e.preventDefault();
-    //获取输入框的用户名，默认DanielHe4rt
-    var key = document.getElementById("key").value || "DanielHe4rt";
-    searchUser(key)
-    // console.log(key);
-    // if(hadUser(key)){
-    //     alert("已经查找并在也面中了");
-    //     return;
-    // }
-    // //使用函数 createXHR 创建一个 XMLHttpRequest 对象并赋值给 request
-    // var request = createXHR();
-    // //打开一个异步的 get 请求
-    // request.open("GET", url + key, true);
-    // request.onreadystatechange = function () {
-    //     if (request.readyState === 4) {
-    //         if (request.status === 200) {
-    //             //返回的 data 是 JSON 格式的，需要使用 JSON.parse 转为对象
-    //             result(JSON.parse(request.responseText));
-    //         } else {
-    //             console.log('request.status:', request.status);
-    //         }
-    //     }
-    // }
-    // request.send(null);
+function init(){
+    //form 表单监听并发送 Ajax 请求
+    var form = document.getElementById("search");
+    form.onsubmit = function (e) {
+        //取消默认跳转事件
+        e.preventDefault();
+        //获取输入框的用户名，默认DanielHe4rt
+        var key = document.getElementById("key").value || "DanielHe4rt";
+        searchUser(key);
+    }
+    
+    //HTML 页面试一试监听事件并处理
+    var tryUser = document.getElementById("test");
+    tryUser.addEventListener("click", function (e) {
+        searchUser(e.target.innerHTML);
+    });
+
+    //搜索预设两用户
+    searchUser("necan");
+    searchUser("uurrx0");
 }
-searchUser("necan");
-searchUser("uurrx0");
+init();
+
 //创建一个 XMLHttpRequest 对象, 兼容IE5, IE6
 function createXHR() {
     var request = null;
@@ -54,6 +46,7 @@ function createXHR() {
     return request;
 }
 
+//发送 Ajax 请求，并调用函数 f 处理 JSON.parse 后的数据
 function ajax([type, url, boolean, data],f) {
     var [type, url, boolean, data] = arguments[0];
     var request = createXHR();
@@ -71,7 +64,10 @@ function ajax([type, url, boolean, data],f) {
 }
 
 //处理返回的数据
-function result(data) {
+function result(data,f) {
+    //返回的 JSON 数据解构
+    // data = JSON.parse(data);
+    //把返回的 data 处理存到 user 对象
     var user = {
         name: data.name || data.login,
         login: data.login,
@@ -82,29 +78,44 @@ function result(data) {
         imgUrl: data.avatar_url,
         repos_url: data.repos_url,
         url: data.html_url,
+        getTime: new Date().getTime(),
         repos: getRepos(data.repos_url)
     }
-    a.r = user;
+    //获取 repos 数组
     function getRepos(url) {
         function change(arr) {
-            var narr = [];
+            // arr = JSON.parse(arr);
+            //处理返回的 repos 数组
+            var newArr = [];
             arr.forEach(function(item, index){
-                narr[index] = {
+                newArr[index] = {
                     name: item.name,
                     description: item.description,
                     clone_url: item.clone_url,
                     html_url: item.html_url,
                     pushed_at: item.pushed_at,
                     created_at: item.created_at,
-                    updated_at: item.updated_at,
+                    updated_at: item.updated_at
                 }
             });
-            user.repos = narr;
-            users.push(user);
-            myLocalStorage.set("users",users);
-            render();
+            //把处理后的数组 设置为对象 user 的 repos 属性
+            user.repos = newArr;
+            //回调函数
+            // console.log(user);
+            callback(user);
         }
         ajax(["GET", url, true],change);
+    }
+    function callback(user){
+        if(f){
+            // console.log("执行函数："+f)
+            f(user);
+        } else {
+            // console.log("默认");
+            users.push(user);
+            render();
+        }
+        myLocalStorage.set("users", users);
     }
     
 }
@@ -114,9 +125,10 @@ function render(i) {
     var result = document.getElementById("result");
     var template = "";
     i = i >= 0 ? i : users.length - 1;
+    // console.log(i,users);
     var user = users[i];
     template += `
-            <div class="user user${i}">
+            <div class="user" id="user${i}">
                 <div class="card-head clearfix">
                     <a target="_black" href="${user.url}"><img class="avatar left" src="${user.imgUrl}" alt="${user.name}"></a>
                     <div class="info">
@@ -132,15 +144,19 @@ function render(i) {
                     <div class="title">
                         <span class="repo">Pinned repositories</span><span class="num">${user.reposNumber}</span>
                     </div>
-                    ${this.renderRepo(user.repos)}
+                    ${user.repos && this.renderRepos(user.repos)}
                 </div>
             </div>
         `;
     var doc = document.createRange().createContextualFragment(template);
+    var selector = "#result #user" + i;
+    var self = document.querySelector(selector);
+    self && self.parentElement.removeChild(self);
     result.insertBefore(doc,result.children[0]);
 }
 
-function renderRepo(arr) {
+//渲染 repos
+function renderRepos(arr) {
     var template = "";
     var len = arr.length;
     for (var i = 0; i < len; i++) {
@@ -156,6 +172,7 @@ function renderRepo(arr) {
     return template;
 }
 
+// 判断是否本地存储有该用户
 function hadUser(key) {
     for(var i = 0; i < users.length; i++){
         var user = users[i];
@@ -163,28 +180,39 @@ function hadUser(key) {
             var doc = document.querySelectorAll(".user .card-head .info .name>a");
             for(var j=0; j<doc.length; j++){
                 if(doc[j].innerHTML === user.name){
-                    alert("已在页面中了哦~");
-                    return -1;
+                    //console.log("已在页面中了哦~");
+                    //更新已有数据并重新渲染到 DOM
+                    update(i,true);
                 }
             }
+            //渲染已有用户到 DOM 中
+            render(i);
             return i;
         }
     }
 }
 
-var tryUser = document.getElementById("test");
-tryUser.addEventListener("click",function(e){
-    searchUser(e.target.innerHTML);
-});
-
+//查找用户
 function searchUser(key){
-    var i = hadUser(key);
-    if (i>=0){
-        render(i);
-        return;
-    } else if(i === -1){
-        return;
+    //判断是否本地储存有用户，有就本地读取，否则执行 Ajax 函数发送 Ajax 请求
+    hadUser(key) || ajax(["GET", url + key, true],result);
+}
+
+//更新已有的用户数据
+function update(i,isRender) {
+    // render(i);
+    // return;
+    if(new Date().getTime() - users[i].getTime > 1000 * 60 ){
+        var key = users[i].login;
+        ajax(["GET", url + key, true], function(data){
+            result(data,function(user) {
+                if(JSON.stringify(user) !== JSON.stringify(users[i])) {
+                    users[i] = user;
+                    isRender && render(i);
+                }
+            })
+        });
     }
-    ajax(["GET", url + key, true],this.result);
+    return i;
 }
 
